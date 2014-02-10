@@ -368,9 +368,9 @@ void main( void ) {
         code = CodeMirror(document.body, {
           lineNumbers: true,
           matchBrackets: true,
-          indentWithTabs: true,
+          indentWithTabs: false,
           tabSize: 8,
-          indentUnit: 8,
+          indentUnit: 2,
           mode: "text/x-glsl",
           onChange: function () {
             if (compileOnChangeCode) {
