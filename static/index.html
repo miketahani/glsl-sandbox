@@ -72,7 +72,6 @@ uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
 uniform float audio[128];
-//uniform sampler2D uSampler;
 
 //bubble fractal
 //set to 8 so it won't be slow and it looks the same
@@ -93,13 +92,13 @@ void main( void ) {
     {
       float t = time * i * k * 0.002; // speed
       vec2 sPos = vec2(rand(vec2(i, k)) + sin(t), rand(vec2(k, i)) + cos(t));
+      float audioDatum = audio[int(((i - 1.) * 10.) + k + i)];
       //sPos *= 0.5;
-      //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * 0.4;
-      //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * (mouse.x);
-      color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * abs(audio[int(((i - 1.) * 10.) + k + i)]);
-      
-      //vec4 texVal = texture2D(uSampler, vec2(i/10.,k/20.));
-      //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * texVal.r;
+      // float modifier = 0.4;
+      // float modifier = mouse.x;
+      // float modifier = abs(audioDatum);
+      float modifier = audioDatum;
+      color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * modifier;      
     }
   }
 
