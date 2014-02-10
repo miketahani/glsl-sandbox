@@ -183,25 +183,13 @@ void main( void ) {
 
       function init() {
 
-        // XXX audio init
+        // XXX audio init:
         // set up the audio stream and send data to the shader via uniforms
         var streamOptions = {
           bufferSize: 256,
           inputChannels: 1,
           outputChannels: 1
         };
-
-        // var processAudioData = function(e) {
-        //   var buffer = e.inputBuffer.getChannelData(0),
-        //       data = Array.prototype.slice.call(buffer);
-          
-        //   // set audio data to be 0.-1.
-        //   data = data.map(function(d) {
-        //     return d + 1 / 2;
-        //   });
-
-        //   uniforms.audio = data;
-        // };
 
         var processAudioData = function(e) {
           var buffer = e.inputBuffer.getChannelData(0);

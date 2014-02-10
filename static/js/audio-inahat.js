@@ -2,7 +2,7 @@ var levels,
     liveSource;
 
 var streamOptsDefaults = {
-  bufferSize: 4096,
+  bufferSize: 256,
   inputChannels: 1,
   outputChannels: 1
 };
@@ -12,7 +12,7 @@ function setupAudioStream(streamOpts, audioDataProcessor) {
   if (!audioDataProcessor) {
     audioDataProcessor = function(e) {
       var buffer = e.inputBuffer.getChannelData(0);
-      uniforms.audio = buffer;
+      levels = buffer;
     };
   }
 
@@ -28,8 +28,6 @@ function setupAudioStream(streamOpts, audioDataProcessor) {
 
     levelChecker.connect(context.destination);
 
-    // defining these functions outside onaudioprocess because onaudioprocess is like a render loop
-    // XXX how to do this?
     var processSingleChannel = function(e) {
       var buffer = e.inputBuffer.getChannelData(0);
     };
@@ -39,10 +37,5 @@ function setupAudioStream(streamOpts, audioDataProcessor) {
 
     levelChecker.onaudioprocess = window.audioProcess = audioDataProcessor;
 
-    // levelChecker.onaudioprocess = window.audioProcess = function(e) {
-    //   var buffer = e.inputBuffer.getChannelData(0);
-    //   // var buffer = [e.inputBuffer.getChannelData(0), e.inputBuffer.getChannelData(1)];
-    //   uniforms.audio = buffer;
-    // };
   });
 }
