@@ -13,6 +13,10 @@ for rapid prototyping of concert visuals
 2. `bundle exec rackup config.ru`
 3. hit `http://localhost:9292`
 
+### shader uniforms
+
+declare `uniform audio[N]` where N = your audio buffer size
+
 ### todo
 
 1. https so chrome doesn't ask for microphone access every time
