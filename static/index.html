@@ -96,7 +96,7 @@ void main( void ) {
       //sPos *= 0.5;
       //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * 0.4;
       //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * (mouse.x);
-      color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * abs(audio[int(i)]);
+      color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * abs(audio[int(((i - 1.) * 10.) + k + i)]);
       
       //vec4 texVal = texture2D(uSampler, vec2(i/10.,k/20.));
       //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * texVal.r;
