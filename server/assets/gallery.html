@@ -37,14 +37,17 @@
 			#gallery>a{
 				border: none;
 			}
-			#gallery img{
+			#gallery img,
+			#gallery a {
 				margin-right: 2em;
 				margin-bottom: 2em;
 				width: 200px;
 				height: 100px;
 				border: 1px solid #212121;
+				padding: 20px 50px;
 			}
-			#gallery img:hover{
+			#gallery img:hover,
+			#gallery a:hover {
 				box-shadow: 0px 0px 24px 10px #263D65;
 				border: 1px solid #316FAE;
 			}
@@ -67,22 +70,44 @@
 			input[type=submit]:hover{
 				color: #009DE9;
 			}
+
+			.effect {
+				font-size: 20px;
+			}
+
+			.box {
+				float: left;
+				width: 200px;
+				height: 100px;
+				/*margin: 20px;*/
+			}
 		</style>
 		<script>function $(id,m){document.getElementById(id).style.display= m?'block':'none';}</script>
 	</head>
 	<body>
 
 <div id="header">		
-<h1><a href="http://glsl.heroku.com/">GLSL Sandbox</a></h1>
-<a href="/e">Create new effect!</a> &nbsp;&nbsp;/&nbsp;
+<!--<h1><a href="http://glsl.heroku.com/">GLSL Sandbox</a></h1>-->
+<a href="/e">Create new effect!</a> 
+<!--
+&nbsp;&nbsp;/&nbsp;
 <a href="https://github.com/mrdoob/glsl-sandbox">github</a> &nbsp;&nbsp;/&nbsp;
 gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://twitter.com/feiss">@feiss</a> &nbsp;/&nbsp; editor by <a href="http://twitter.com/mrdoob">@mrdoob</a>, <a href="http://twitter.com/mrkishi">@mrkishi</a>, <a href="http://twitter.com/p01">@p01</a>, <a href="http://twitter.com/alteredq">@alteredq</a>, <a href="http://twitter.com/kusmabite">@kusmabite</a> and <a href="http://twitter.com/emackey">@emackey</a>
+-->
 </div>
 
 <div id="gallery">
 
+<!-- 
+	XXX FIX (re effect['versions'].length-1 < 0): is this a mongo issue? what's the deal here? 
+-->
+
 <% effects.each do |effect| %>
-	<a href='/e#<%= effect['_id'] %>.<%= effect['versions'].length-1 %>'><img src='<%= image(effect) %>'></a>
+	<% if effect['versions'].length-1 > -1 %>
+		<div class='box'>
+			<a class='efx' href='/e#<%= effect['_id'] %>.<%= effect['versions'].length-1 %>'><%= effect['_id'] %>.<%= effect['versions'].length-1 %></a>
+		</div>
+	<% end %>
 <% end %>
 
 </div>
