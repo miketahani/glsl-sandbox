@@ -4,7 +4,7 @@ require 'sinatra'
 require 'mongo'
 require 'json'
 require 'erb'
-require 'cloudinary'
+# require 'cloudinary'
 
 $: << './server'
 

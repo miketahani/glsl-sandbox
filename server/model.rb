@@ -66,18 +66,18 @@ class GlslDatabase
             :code => code_data['code']
         }
 
-        res=Cloudinary::Uploader.upload(
-            code_data['image'],
-            :public_id => code_id.to_s)
+        # res=Cloudinary::Uploader.upload(
+        #     code_data['image'],
+        #     :public_id => code_id.to_s)
 
-        image_url=res['url']
+        # image_url=res['url']
 
         @code.find_and_modify({
             :query => { :_id => code_id },
             :update => {
                 '$set' => {
-                    :modified_at    => time,
-                    :image_url      => image_url
+                    :modified_at    => time
+                    # :image_url      => image_url
                 },
                 '$push' => { :versions => data }
             }
