@@ -71,20 +71,48 @@ precision mediump float;
 uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
+uniform float audio[128];
+//uniform sampler2D uSampler;
+
+//bubble fractal
+//set to 8 so it won't be slow and it looks the same
+
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453) * 2.0 - 1.0;
+}
 
 void main( void ) {
 
-  vec2 position = ( gl_FragCoord.xy / resolution.xy ) + mouse / 4.0;
-
+  vec2 pos = ( gl_FragCoord.xy / resolution.xy * 2.) - 1.0;
+  pos.x *= resolution.x / resolution.y;
   float color = 0.0;
-  color += sin( position.x * cos( time / 15.0 ) * 80.0 ) + cos( position.y * cos( time / 15.0 ) * 10.0 );
-  color += sin( position.y * sin( time / 10.0 ) * 40.0 ) + cos( position.x * sin( time / 25.0 ) * 40.0 );
-  color += sin( position.x * sin( time / 5.0 ) * 10.0 ) + sin( position.y * sin( time / 35.0 ) * 80.0 );
-  color *= sin( time / 10.0 ) * 0.5;
+  
+  for(float i = 1.0; i <= 10.0; i++)
+  {
+    for(float k = 0.0; k < 20.0; k++)
+    {
+      float t = time * i * k * 0.002; // speed
+      vec2 sPos = vec2(rand(vec2(i, k)) + sin(t), rand(vec2(k, i)) + cos(t));
+      //sPos *= 0.5;
+      //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * 0.4;
+      //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * (mouse.x);
+      color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * abs(audio[int(i)]);
+      
+      //vec4 texVal = texture2D(uSampler, vec2(i/10.,k/20.));
+      //color += max(0.0, ((1.0 / i) - distance(pos, sPos)) * (i)) * texVal.r;
+    }
+  }
 
-  gl_FragColor = vec4( vec3( color, color * 0.5, sin( color + time / 3.0 ) * 0.75 ), 1.0 );
+  color *= 0.5;
+  color = pow(color, 2.0);
 
-}</script>
+  //vec4 col = vec4(color*sin(time*.3), color*abs(sin(pos.x)), color*cos(time*.3), 1.0);
+  vec4 col = vec4(vec3(color), 1.);
+  gl_FragColor = col;
+
+}
+
+    </script>
 
     <script id="fragmentShader" type="x-shader/x-fragment">
 
