@@ -15,7 +15,7 @@ for rapid prototyping of concert visuals
 
 ### shader uniforms
 
-declare `uniform audio[N]` where N = your audio buffer size
+declare `uniform float audio[N];` where N = your audio buffer size
 
 ### todo
 
