@@ -7,14 +7,37 @@ var streamOptsDefaults = {
   outputChannels: 1
 };
 
+var processors = {
+
+  defaultProcessor: function(e) {
+
+    var buffer = e.inputBuffer.getChannelData(0);
+    parameters.audio = buffer;
+
+  },
+
+  avgLevels: function(e) {
+    
+    var buffer = e.inputBuffer.getChannelData(0);
+    var last = parameters.audio,
+        curr = buffer,
+        avg  = new Float32Array(n);
+
+    var i = n;
+    while (i--) {
+      avg[i] = (last[i] + curr[i]) / 2;
+    }
+
+    parameters.audio = avg;
+    
+  }
+
+};
+
 function setupAudioStream(streamOpts, audioDataProcessor) {
   if (!streamOpts) streamOpts = streamOptsDefaults;
-  if (!audioDataProcessor) {
-    audioDataProcessor = function(e) {
-      var buffer = e.inputBuffer.getChannelData(0);
-      uniforms.audio = buffer;
-    };
-  }
+  if (!audioDataProcessor) 
+    audioDataProcessor = processors.defaultProcessor;
 
   var context = new webkitAudioContext();  
 
@@ -28,21 +51,10 @@ function setupAudioStream(streamOpts, audioDataProcessor) {
 
     levelChecker.connect(context.destination);
 
-    // defining these functions outside onaudioprocess because onaudioprocess is like a render loop
-    // XXX how to do this?
-    var processSingleChannel = function(e) {
-      var buffer = e.inputBuffer.getChannelData(0);
-    };
-    var processTwoChannels = function(e) {
-      var buffer = [e.inputBuffer.getChannelData(0), e.inputBuffer.getChannelData(1)];
-    }
-
+    // define audioDataProcessor outside onaudioprocess bc onaudioprocess is like a render loop
     levelChecker.onaudioprocess = window.audioProcess = audioDataProcessor;
 
-    // levelChecker.onaudioprocess = window.audioProcess = function(e) {
-    //   var buffer = e.inputBuffer.getChannelData(0);
-    //   // var buffer = [e.inputBuffer.getChannelData(0), e.inputBuffer.getChannelData(1)];
-    //   uniforms.audio = buffer;
-    // };
+    console.log('finished setting up audio');
+
   });
 }
