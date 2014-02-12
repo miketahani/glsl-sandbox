@@ -71,7 +71,7 @@ precision mediump float;
 uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
-uniform float audio[128];
+uniform float audio[256];
 
 //bubble fractal
 //set to 8 so it won't be slow and it looks the same
@@ -218,12 +218,7 @@ void main( void ) {
           outputChannels: 1
         };
 
-        var processAudioData = function(e) {
-          var buffer = e.inputBuffer.getChannelData(0);
-          parameters.audio = buffer;
-        }
-
-        setupAudioStream(streamOptions, processAudioData);
+        setupAudioStream(streamOptions);
 
         // XXX end audio init
 
