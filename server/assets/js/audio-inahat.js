@@ -55,8 +55,9 @@ var processors = {
 
 };
 
-function setupAudioStream(streamOpts, audioDataProcessor) {
-  if (!streamOpts) streamOpts = streamOptsDefaults;
+function setupAudioStream(opts, audioDataProcessor) {
+
+  if (!opts) opts = streamOptsDefaults;
   if (!audioDataProcessor) 
     audioDataProcessor = processors.defaultProcessor;
 
@@ -67,7 +68,7 @@ function setupAudioStream(streamOpts, audioDataProcessor) {
     microphone = context.createMediaStreamSource(stream);
     microphone.connect(context.destination);
 
-    var analyser = context.createScriptProcessor(streamOpts.bufferSize, streamOpts.inputChannels, streamOpts.outputChannels);
+    var analyser = context.createScriptProcessor(opts.bufferSize, opts.inputChannels, opts.outputChannels);
     microphone.connect(analyser);
 
     analyser.connect(context.destination);
