@@ -1,10 +1,14 @@
 // for working with audio data
+// todo: clean this up
 
 var levels,
-    microphone;
+    microphone,
+    bufSize = 256,
+    side = Math.sqrt(bufSize),
+    textureOffset = 11;
 
 var streamOptsDefaults = {
-  bufferSize: 256,
+  bufferSize: bufSize,
   inputChannels: 1,
   outputChannels: 1
 };
@@ -38,15 +42,15 @@ var processors = {
   data2texture: function(e) {
 
     var buffer = e.inputBuffer.getChannelData(0);
-    var b = 256 * 4;
+    var b = bufSize * 4;  // RGBA
     var data   = new Float32Array(b);
     
     for (var i = 0; i < b; i+=4) {
       var datum = (buffer[i/4] + 1) / 2;
-      data[i] = Math.random();
+      data[i] = datum;
       data[i+1] = 0.0;
       data[i+2] = 0.0;
-      data[i+3] = 1.0; 
+      data[i+3] = 1.0;
     }
 
     updateAudioTexture(data);
@@ -57,7 +61,13 @@ var processors = {
 
 function setupAudioStream(opts, audioDataProcessor) {
 
-  if (!opts) opts = streamOptsDefaults;
+  if (!opts) {
+    opts = streamOptsDefaults;
+  } else {
+    bufSize = opts.bufferSize;
+    side    = Math.sqrt(bufSize);
+  }
+
   if (!audioDataProcessor) 
     audioDataProcessor = processors.defaultProcessor;
 
@@ -90,9 +100,10 @@ function initAudioTexture() {
   audioTexture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, audioTexture);
 
-  // these options are required for floating-point textures
+  // NEAREST req'd for floating-point texture TEXTURE_{MIN/MAG}_FILTER
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -101,14 +112,14 @@ function initAudioTexture() {
 }
 
 function updateAudioTexture(data) {
-  gl.useProgram( currentProgram );
+  gl.useProgram(currentProgram);
 
-  gl.activeTexture(gl.TEXTURE11);               // 11 for no reason
+  gl.activeTexture(gl.TEXTURE0 + textureOffset);
   gl.bindTexture(gl.TEXTURE_2D, audioTexture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // 2d coordinates to 3d coordinates
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 16, 16, 0, gl.RGBA, gl.FLOAT, data);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, side, side, 0, gl.RGBA, gl.FLOAT, data);
   
-  gl.uniform1i(gl.getUniformLocation(currentProgram, 'audioTex'), 11);  // to the shader
+  gl.uniform1i(gl.getUniformLocation(currentProgram, 'audioTex'), textureOffset);  // to the shader
 }
 
 

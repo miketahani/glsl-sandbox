@@ -918,14 +918,14 @@ void main( void ) {
        * set up the audio stream and send data to the shader via uniforms
        */
       var streamOptions = {
-        bufferSize: 256,
+        bufferSize: 512,
         inputChannels: 1,
         outputChannels: 1
       };
 
       initAudioTexture();
 
-      setupAudioStream(null, processors.data2texture);
+      setupAudioStream(streamOptions, processors.data2texture);
 
       // XXX end audio init
 
