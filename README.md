@@ -19,5 +19,8 @@ declare `uniform float audio[N];` where N = your audio buffer size
 
 ### todo
 
-1. https so chrome doesn't ask for microphone access every time
+1. https (with thin?) so chrome doesn't ask for microphone access every time
 2. controls for fading/transitioning
+3. should rewrite this with a less bulky interface & less overhead ("presentation mode"?)
+4. audio smoothing
+5. a lot more
