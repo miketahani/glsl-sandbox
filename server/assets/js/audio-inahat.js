@@ -7,7 +7,7 @@ var levels,
     side = Math.sqrt(bufSize),
     textureOffset = 11;
 
-var streamOptsDefaults = {
+var defaultStreamOpts = {
   bufferSize: bufSize,
   inputChannels: 1,
   outputChannels: 1
@@ -62,7 +62,7 @@ var processors = {
 function setupAudioStream(opts, audioDataProcessor) {
 
   if (!opts) {
-    opts = streamOptsDefaults;
+    opts = defaultStreamOpts;
   } else {
     bufSize = opts.bufferSize;
     side    = Math.sqrt(bufSize);
