@@ -2,7 +2,7 @@ var levels,
     liveSource;
 
 var streamOptsDefaults = {
-  bufferSize: 4096,
+  bufferSize: 256,
   inputChannels: 1,
   outputChannels: 1
 };
@@ -30,6 +30,26 @@ var processors = {
 
     parameters.audio = avg;
     
+  },
+
+  data2texture: function(e) {
+
+    var buffer = e.inputBuffer.getChannelData(0);
+    var b = 256 * 4;
+    // var data   = new Uint8Array(b);  // r,g,b,a for each data point
+    var data   = new Float32Array(b);
+    for (var i = 0; i < b; i+=4) {
+      data[i] = 0; //(buffer[i] + 1) / 2;
+      data[i+1] = 0;
+      data[i+2] = 0;
+      data[i+3] = 0; 
+    }
+    // textureFromFloats(data);
+    // var t = textureFromPixelArray(gl, data, 256, 1, true);
+    var t = tff(data);
+
+    // parameters.audioTex = t;
+
   }
 
 };
