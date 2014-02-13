@@ -350,6 +350,7 @@ void main( void ) {
 
           // gl = canvas.getContext( 'experimental-webgl', { preserveDrawingBuffer: true } );
           gl = canvas.getContext( 'experimental-webgl', {} ); // XXX
+          gl.getExtension("OES_texture_float"); // XXX
 
         } catch( error ) { }
 
@@ -928,6 +929,8 @@ void main( void ) {
         outputChannels: 1
       };
 
+      initAudioTexture();
+
       setupAudioStream(null, processors.data2texture);
 
       // XXX end audio init
@@ -1004,6 +1007,10 @@ void main( void ) {
 
         gl.activeTexture( gl.TEXTURE0 );
         gl.bindTexture( gl.TEXTURE_2D, backTarget.texture );
+
+        // XXX
+        // gl.activeTexture(gl.TEXTURE3);
+        // gl.bindTexture(gl.TEXTURE_2D, audioTexture);
 
         // Render custom shader to front buffer
 
