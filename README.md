@@ -21,7 +21,7 @@ if you want to pass an array, declare `uniform float audio[N];` in
 your shader, where N = your audio buffer size (make sure to assign the audio buffer 
 to the global `parameters.audio` in your audio processor function first). 
 
-i don't want to deal with GLSL's const-only array indexing, so there's a data-to-texture
+if you don't want to deal with GLSL's const-only array indexing, there's a data-to-texture
 pipeline included. declare `uniform sampler2D audioTex` in the frag shader, then access
 the data anywhere in the shader with `vec4 data = texture2D(audioTex, gl_FragCoord.xy);`.
 you can replace `gl_FragCoord.xy` with any vec2 with normalized coordinates.
