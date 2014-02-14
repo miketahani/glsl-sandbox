@@ -2,6 +2,10 @@
 
 var Transitions = (function() {
 
+  var keys = {
+    
+  };
+
   var init = function() {
     
     window.addEventListener('keypress', function(e) {
@@ -10,10 +14,7 @@ var Transitions = (function() {
 
       console.log(e.keyCode);
 
-      // 
-
-      // switch (e.keyCode) {
-      // }
+      if (var key = keys[e.keyCode]) key();
 
     });
   
