@@ -1,0 +1,293 @@
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+
+      body,
+      svg {
+        margin: 0;
+        padding: 0;
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <div id="main"></div>
+
+    <script src="js/d3.v3.js"></script>
+    <script src="js/three.r65.js"></script>
+    <script src='js/audio-inahat-three.js'></script>
+    <script>
+
+      var mouseX = 0, mouseY = 0;
+
+      var windowHalfX = window.innerWidth / 2;
+      var windowHalfY = window.innerHeight / 2;
+
+      document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+      function onDocumentMouseMove(event) {
+
+        mouseX = ( event.clientX - windowHalfX ) * 10;
+        mouseY = ( event.clientY - windowHalfY ) * 10;
+
+      }
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 10000);
+      
+      var renderer = new THREE.WebGLRenderer();
+      // renderer.setClearColor(0xffffff);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      
+      // var geometry = new THREE.CubeGeometry(1,1,1);
+      // var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+      // var cube = new THREE.Mesh(geometry, material);
+      // scene.add(cube);
+      
+      // for cubes
+      var cubes = new THREE.Object3D(),
+          material = new THREE.MeshBasicMaterial({
+            color: 0xff0000, 
+            wireframe: false,
+            transparent: true,
+            opacity: 0.8
+          });
+
+      scene.add(cubes);
+      for (var i = 0; i < 256; i++) {
+        // var g = new THREE.CubeGeometry(1, 1, 1),
+        var g = new THREE.IcosahedronGeometry(1),
+            c = new THREE.Mesh(g, material);
+        cubes.add(c);
+      }
+
+
+      camera.position.z = 150;
+      
+      var streamOpts = {
+        bufferSize: 256,
+        inputChannels: 1,
+        outputChannels: 1
+      };
+
+      var size = 20,
+          domain = [-0.3, 0.3];
+      var radiusMod = d3.scale.linear().domain(domain).range([-10, 10]),
+          scale  = d3.scale.linear().domain(domain).range([size, 0.5]),
+          hue = d3.scale.linear().domain(domain).range([0, 1.0]);
+
+      var bufsize = streamOpts.bufferSize,
+          off = 2.0 / bufsize,
+          inc = Math.PI * (3 - Math.sqrt(5));
+
+      var n = 256,
+          placeholderData = d3.range(n).map(function(d) { return 0; }),
+          pts = pointsOnSphere(placeholderData),
+          mod = 20;
+
+
+      var objs = new THREE.Object3D();
+      scene.add(objs);
+
+      // particles!
+      var particleGeometry = new THREE.Geometry();
+      // geometry.vertices = d3.range(256).map(function(d) { return new THREE.Vector3(0, 0, 0); });
+      for (var i = 0; i < n; i++) {
+        var p = cubes.children[i].position;
+        particleGeometry.vertices.push(new THREE.Vector3(p.x, p.y, p.z));
+      }
+      var particleMaterial = new THREE.ParticleBasicMaterial({size: 1.0, color: 0xffffff });//transparent: true, opacity: 0.3});
+      var particles = new THREE.ParticleSystem(particleGeometry, particleMaterial);
+      particles.dynamic = true;
+      particles.sortParticles = true;
+      objs.add(particles);
+
+
+      // var lineGeometry = new THREE.Geometry(),
+      //     material = new THREE.LineBasicMaterial({
+      //       color: 0x000000,
+      //       transparent: true,
+      //       opacity: 1,
+      //       // fog: true,
+      //       linewidth: 1
+      //     });
+      // particles.geometry.vertices.forEach(function(v) {
+      //   lineGeometry.vertices.push(v);
+      // });
+      // var line = new THREE.Line(lineGeometry, material);
+      // objs.add(line);
+
+      // console.log("pts:", pts);
+
+      function pointOnSphere(datum, idx) {
+        var k = idx,
+            y = k * off - 1 + (off /2),
+            r = Math.sqrt(1 - y * y) + radiusMod(datum),
+            phi = k * inc,
+            x = Math.cos(phi) * r,
+            z = Math.sin(phi) * r;
+        return new THREE.Vector3(x, y, z);
+      }
+
+      // http://oos.moxiecode.com/js_webgl/world/blocks.html
+      function pointsOnSphere(data) {
+
+        var upts = [];
+        // var inc = Math.PI * (3 - Math.sqrt(5));
+        // var off = 2.0 / n;
+        var x, y, z,
+            r,
+            phi;
+            // prepopulated;
+
+        // if (typeof n === 'object') prepopulated = true;
+
+        // console.log(bufsize);
+
+        for (var k = 0; k < bufsize; k++){
+          y = k * off - 1 + (off /2);
+          // r = Math.sqrt(1 - y * y) + (prepopulated ? radiusMod(n[k]) : 0);
+          // console.log(data[k], radiusMod(data[k]));
+          // console.log(k, bufsize, data[k]);
+          var datum = data[k];
+          try {
+            r = Math.sqrt(1 - y * y) + radiusMod(datum);
+          } catch (e) {
+            console.log('error:', e);
+            console.log(data[k], radiusMod(datum));
+          }
+          phi = k * inc;
+          x = Math.cos(phi) * r;
+          z = Math.sin(phi) * r;
+
+          x *= mod;
+          y *= mod;
+          z *= mod;
+
+          // console.log(x, y, z);
+
+          // upts.push(new THREE.Vector3(x, y, z));
+          var s = scale(datum),
+              h = hue(datum);
+
+          cubes.children[k].position.set(x, y, z);
+          cubes.children[k].scale.set(s, s, s);
+          cubes.children[k].material.color.setHSL(h, 1.0, 0.7);
+
+          if (particleGeometry)
+            particleGeometry.vertices[k] = new THREE.Vector3(x*3, y*3, z*3);
+
+        }
+
+        // console.log(upts);
+
+        // return upts;
+
+      }
+
+      // function pointsOnSphere(n) {
+
+      //   var upts = new Array();
+      //   var inc = Math.PI * (3 - Math.sqrt(5));
+      //   var off = 2.0 / n;
+      //   var x, y, z;
+      //   var r;
+      //   var phi;
+         
+      //   for (var k = 0; k < n; k++){
+      //     y = k * off - 1 + (off /2);
+      //     r = Math.sqrt(1 - y * y);
+      //     phi = k * inc;
+      //     x = Math.cos(phi) * r;
+      //     z = Math.sin(Math.sin(phi) * r) * r;
+
+      //     upts.push(new THREE.Vector3(x, y, z));
+      //   }
+      //   return upts;
+      // }
+
+      // function saveImage(rawImageData, name, frame) {
+      //   if (!name) name = "test";
+      //   var ajax = new XMLHttpRequest();
+      //   ajax.open("POST", "http://localhost:8080/frame", true);
+      //   ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      //   ajax.onreadystatechange = function() {
+      //     if (ajax.readyState == 4) {
+      //       // success
+      //     }
+      //   };
+      //   var req = "convert=" + encodeURIComponent(rawImageData) + "&id=" + name+ "&frame=" + frame;
+      //   ajax.send(req);
+      // }
+
+      setupAudioStream(streamOpts);
+
+      window.addEventListener('click', function() {
+        console.log('clicked');
+        render();
+      });
+
+      // var frame = 0,
+      //     lastV = 0;
+      var render = function () {
+        requestAnimationFrame(render);
+      
+        // camera.position.x += ( mouseX - camera.position.x ); //* .05;
+        // camera.position.y += ( - mouseY - camera.position.y ); //* .05;
+
+        // camera.lookAt( scene.position );
+
+
+        // if (frame++ > 5) {
+        //   frame = 0;
+        //   var v = particles.geometry.vertices,
+        //       vLen = v.length;
+        //   if (lastV === vLen) {
+        //     lastV = 0;
+        //   }
+        //   // console.log(lastV);
+        //   lineGeometry.vertices.shift();
+        //   lineGeometry.vertices.push(v[lastV]);
+        //   lastV++;
+        // }
+        // lineGeometry.verticesNeedUpdate = true;
+
+        // var canvasObj = document.querySelector("canvas");
+        // var rawImageData = canvasObj.toDataURL("image/png;base64");
+        // saveImage(rawImageData, "mars", frame++);
+
+        // objs.rotation.x += 0.005;
+        // objs.rotation.y += 0.005;
+
+        // geometry.vertices = pointsOnSphere(levels);
+        pointsOnSphere(levels);
+
+        var i = 256;
+        while (i--) {
+        //   geometry.vertices[i].x += Math.sin(new Date());
+          cubes.children[i].rotation.x += 0.01;
+          cubes.children[i].rotation.y += 0.01;
+        }
+        // cubes.rotation.x -= 0.01;
+        // cubes.rotation.y -= 0.01;
+        particles.rotation.x += 0.005;
+        particles.rotation.y += 0.005;
+
+        // var d = new Date() / 1000000;
+
+        particleMaterial.color.setHSL(Math.abs(Math.sin(new Date())), 1.0, 0.7);
+      
+        renderer.render(scene, camera);
+
+        particleGeometry.verticesNeedUpdate = true;
+      };
+      
+    </script>
+
+  </body>
+</html>

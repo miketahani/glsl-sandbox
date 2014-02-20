@@ -1,0 +1,345 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+
+      body {
+        cursor: none;
+      }
+
+      body,
+      svg {
+        margin: 0;
+        padding: 0;
+        cursor: none;
+      }
+
+      iframe,
+      #fader {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        /*cursor: none;*/
+      }
+
+      #fader {
+        background: #000;
+        z-index: 99999999999999;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+    </style>
+
+  </head>
+  <body id='loaderpage'>
+
+    <div id="main">
+      <div id='fader'> </div>
+      <iframe name='iframe-container'></iframe>
+    </div>
+
+    <script src="js/d3.v3.js"></script>
+
+    <script>
+      var frame;
+      function setUpFrame() { 
+        frame = window.frames['outsource'];
+        // frame.initShader(box.shader.shaderRaw);
+      }
+    </script>
+
+    <script>
+
+      // var qs = window.location.hash.substr(1).split('&'),
+      //     args = {};
+      // qs.forEach(function(arg) {
+      //   arg = arg.split('=');
+      //   args[arg[0]] = arg[1];
+      // });
+
+      var box = {};
+
+      box.hash = {args: {}};
+
+      box.hash.getArgsFromHash = function() {
+        // if (!box.hash.args || !box.hash.args.hash) return;
+        // if (!box.hash.args.hash) return;
+
+        var hash = window.location.hash.substr(1);
+        if (hash === '') return;
+
+        var qs   = hash.split('&'),
+            args = {hash: hash};
+
+        qs.forEach(function(arg) {
+          arg = arg.split('=');
+          arg[1] = +arg[1] || arg[1];
+          args[arg[0]] = arg[1];
+        });
+
+        return box.hash.args = args;
+      };
+
+      box.hash.getArgsFromHash();
+      // console.log(box.hash);
+
+      box.hash.setHashFromArgs = function(args) {
+        if (!args) args = box.hash.args;
+        // if (!args.hash) return;
+
+        var skip = ['hash'];
+
+        var hash = d3.entries(args).filter(function(a) {
+            return skip.indexOf(a.key) === -1;
+          })
+          .map(function(a) { 
+            return [a.key, a.value].join('='); 
+          });
+
+        window.location.hash = '#' + hash.join('&');
+      };
+
+      var pages = {
+        shader: 'https://localhost:3001/e#',
+        transition: 'invisible.html'
+      };
+
+      box.hash.args.page = decodeURIComponent(box.hash.args.page || pages.transition);
+
+      // console.log(args);
+
+      d3.selectAll('iframe').remove();
+
+      var container = d3.select('#main'),
+          fader     = d3.select('#fader'),
+          iframe    = d3.select('#main').append('iframe').attr('src', box.hash.args.page).attr('name', 'iframe-container');
+
+      // 1-8 and 0 map to localhost:9292/e#n where n is a shader
+      var keys2viz = {
+        '49': '39.8', // 1
+        '50': '53.1', // 2
+        '51': '59.0', // 3
+        '52': '58.0', // 4
+        '53': '57.0', // 5
+        '54': '60.0', // 6
+        '55': '14.0', // 7
+        '56': '61.0', // 8
+        '48': '17.0'  // 0 
+      };
+      var numberKeys = [];
+      for (var k in keys2viz) numberKeys.push(k);
+
+      var fading = false,
+          faded = false;
+
+      function fade(opacity) {
+        fading = true;
+        fader
+          .transition().duration(2000)
+            .style('opacity', opacity || 1)
+            .each('end', function() {
+              fading = false;
+            });
+      }
+
+      // var lastLoadedPage = args.page || 'fade';
+
+      // function fadeOut(toPage, toBlack) {
+      //   // XXX FIX clean this shit up
+      //   // if (lastLoadedPage && lastLoadedPage === toPage) 
+      //   //   return;
+      //   if (fading) 
+      //     return;
+      //   fading = true;
+      //   //console.log('fading in');
+      //   // if (!toBlack) {
+      //     var encodedPage = encodeURIComponent(toPage);
+      //     window.location.hash = '#page=' + encodedPage;
+      //     args.page = encodedPage;
+      //     // if (!faded) {
+      //       fader
+      //         .transition().duration(2000)
+      //           .style('opacity', 1)
+      //           .each('end', function() {
+      //             //console.log('done fading in, fading out');
+      //             d3.selectAll('iframe').remove();
+      //             // iframe.remove();
+      //             iframe = d3.select('#main').append('iframe');
+      //             iframe.attr('src', toPage);
+      //             lastLoadedPage = toPage;
+      //             fader
+      //               .transition().duration(2000)
+      //                 .style('opacity', 0)
+      //                 .each('end', function() {
+      //                   fading = false;
+      //                   faded = false;
+      //                 });
+      //           });
+      // }
+
+      function loadPageWithFade(page) {
+        if (page === box.hash.page) return;
+
+        box.hash.args.page = encodeURIComponent(page);
+        box.hash.setHashFromArgs();
+
+        var loadPage = function() { 
+          d3.selectAll('iframe').remove();
+          iframe = d3.select('#main').append('iframe').attr('name', 'iframe-container');
+          iframe.attr('src', page);
+        };
+        fadeScreen(1, function() { loadPage(); fadeScreen(0); });
+      };
+
+      var state = {
+        faded: true,
+        opacity: 1
+      };
+
+      var fadeScreen = function(fadeTo, callback, duration) {
+        
+        /* callback can be used to fade out -> do something -> fade in:
+         *     
+         *     var cb = fn() { load_new_page_here };
+         *     fadeScreen(1, fn() { cb(); fadeScreen(0); });
+         */
+
+        if (!callback) callback = function(){};
+        if (!duration) duration = 2000;
+
+        d3.select('#fader')
+          .transition().duration(duration)
+            .style('opacity', fadeTo)
+            .each('end', function() {
+              if (fadeTo === 1 || fadeTo === 0) {
+                state.faded = !state.faded;
+              }
+              state.opacity = fadeTo;
+              callback();
+            });
+
+        function switchFadedState() {
+          state.faded   = !state.faded;
+          state.opacity = fadeTo;
+        }
+      
+      };
+
+      var order = d3.values(keys2viz);
+
+      var cursorVisible = false;
+
+      var keyboard = {
+        44: function() {    // <
+          if ((o = state.opacity) > 0)
+            fadeScreen(o - 0.1, undefined, 100); 
+          console.log('opac -');
+        },
+        46: function() {    // >
+          if ((o = state.opacity) < 1)
+            fadeScreen(o + 0.1, undefined, 100);
+            console.log('opac +'); 
+        },
+        105: function() {   // i (fade in)
+          fadeScreen(0);
+        },
+        111: function() {   // o (fade out)
+          fadeScreen(1);
+        },
+
+        116: function() {
+          loadPageWithFade(pages.transition);
+        },
+
+        115: function() {
+
+          frame.setDamp(-1);
+        },
+
+        100: function() {
+
+          frame.setDamp(1);
+
+        },
+
+        // mapping numbers to shaders
+        48: function() {    // 0
+        },
+        49: function() {    // 1
+          // var currentShader = box.shader.state.current;
+          // loadPageWithFade(pages.shader + keys2viz[])
+        },
+        50: function() {  },
+        51: function() {  },
+        52: function() {  },
+        53: function() {  },
+        54: function() {  },
+        55: function() {  },
+        56: function() {  },
+        57: function() {  }
+      };
+
+      window.addEventListener('keypress', function(e) {
+        var key = e.keyCode;
+        var candidate = key - 48; // between 0-9?
+        if (key === 55) {
+          loadPageWithFade('blocks.html');
+          return;
+        }
+        if (candidate < 10 && candidate >= 0) {
+          var shaderToLoad = keys2viz[''+key];
+          loadPageWithFade(pages.shader + shaderToLoad);
+        } else {
+          if (keyboard[key]) keyboard[key]();
+        }
+      });  
+
+      // function keypress(e) {
+      //   e.preventDefault();
+      //   // var keyPressed = ''+e.keyCode;
+      //   var keyPressed = ''+(e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0);
+
+      //   console.log('keypress:', keyPressed);
+
+      //   if (keyPressed === '102') {
+      //     fadeOut(null, true);
+      //     return;
+      //   }
+
+      //   if (keyPressed === '116') {
+      //     fadeOut(pages.transition);
+      //     return;
+      //   }
+
+      //   if (numberKeys.indexOf(keyPressed) > -1) {
+      //     fadeOut(pages.shader + keys2viz[keyPressed]);
+      //     return;
+      //     // d3.select('body').append('script').text(keyPressFunction)
+      //   }
+      // }
+
+      // window.addEventListener('keypress', keypress);
+
+
+    </script>
+<!--
+        <script>
+      function setUpFrame() { 
+        // var frame = window.frames['iframe-container'];
+        var frame = window.frames.iframe[0][0];
+        // console.log('frame:', frame, window.frames);
+        frame.yourMethod('hello');
+        // frame.initShader(box.shader.shaderRaw);
+      }
+    </script>
+  -->
+
+  </body>
+</html>

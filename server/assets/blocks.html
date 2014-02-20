@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <style>
+
+      body,
+      svg {
+        margin: 0;
+        padding: 0;
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <div id='main'></div>
+
+    <script src='js/d3.v3.js'></script>
+    <script src='js/three.r65.js'></script>
+    <script src='js/audio-inahat-three-new.js'></script>
+    <script>
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 10000);
+      
+      var renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x1a1a1a);
+      document.body.appendChild(renderer.domElement);
+      
+      scene.fog = new THREE.FogExp2(0x1a1a1a, 0.002);
+
+
+      var cubes = new THREE.Object3D();
+      scene.add(cubes);
+
+      var destroy = new THREE.Object3D();
+      scene.add(destroy);
+
+      var bounds = 500,
+          b2 = bounds/2,
+          maxCubeSize = 20;
+
+      var geoms = [
+        function() { return new THREE.IcosahedronGeometry(); },
+        function() { return new THREE.CubeGeometry(1,1,1); },
+        function() { return new THREE.OctahedronGeometry(); },
+        function() { return new THREE.TetrahedronGeometry(); }
+      ];
+
+      function bakeNewShape(moreThanOne, destroySoon) {
+
+        if (!arguments.length) moreThanOne = 1;
+
+        for (var i = 0; i < moreThanOne; i++) {
+
+          var geometry = geoms[~~(Math.random()*geoms.length)]();
+
+          var material = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(), 
+            // side: THREE.DoubleSide, 
+            blending: THREE.AdditiveBlending,
+            transparent: true, 
+            opacity: 1
+          });
+          material.color.setHSL(Math.random(), 1.0, 0.65);
+          var cube = new THREE.Mesh(geometry, material);
+          
+          var singleRand = Math.random();
+          setCubePosition(cube, singleRand);
+          
+          if (!destroySoon) 
+            var s = singleRand * maxCubeSize;
+          
+          else 
+            s = maxCubeSize / 5;
+          
+          cube.scale.set(s, s, s);
+
+          if (destroySoon) {
+            destroy.add(cube);
+          } else {
+            cubes.add(cube);
+          }
+
+        }
+
+      }
+
+      function setCubePosition(cube, rand) {
+        
+        // var now = new Date();
+
+        if (!rand) rand = Math.random();
+
+        // cube.position.set(Math.sin(now)*b2, Math.cos(now)*b2, -rand * bounds * 2 );
+        cube.position.set(Math.random() * b2, Math.random() * b2, -rand * bounds * 2);
+        
+        var s = Math.random() * maxCubeSize;
+        
+        if (Math.random() > 0.95) s += maxCubeSize;
+        
+        cube.scale.set(s, s, s);
+
+      }
+
+      d3.range(128).forEach(function(d) {
+        
+        bakeNewShape();
+
+      });
+
+      // setupAudioStreamLazy();
+      initMic();
+
+      camera.position.set(bounds/4, bounds/4, bounds);
+      
+      var nCubes = cubes.children.length,
+          butDestroySoon = true;
+
+      var render = function () {
+        requestAnimationFrame(render);
+
+        var rh = renderhooks.length;
+        while (rh--) {
+          renderhooks[rh]();
+        }
+
+        var n = nCubes,
+            z   = bounds - 40;
+        var r = Math.random();
+
+        while (n--) {
+          var c   = cubes.children[n],
+              pos = c.position;
+
+          if (pos.z > z) {
+
+            setCubePosition(c, r);
+            c.material.opacity = 1;
+          
+          } else {
+            var datum = mags[n]; // * maxCubeSize * 2;
+            // c.scale.set(datum, datum, datum);
+            if (datum > 0.8 && destroy.children.length < 25) {
+              console.log('baking some');
+              bakeNewShape(~~(datum*10), butDestroySoon);
+            }
+            // c.scale.set((datum*10)*maxCubeSize);
+            c.position.z += 5;
+            c.rotation.z += 0.1;
+            c.rotation.y += 0.05;
+            c.material.color.setHSL(datum, 1.0, 0.65);
+            // c.material.opacity = (z - pos.z) / z;
+          }
+
+        }
+
+        var n = destroy.children.length;
+        while (n--) {
+          var c   = destroy.children[n],
+              pos = c.position;
+
+          if (pos.z <= z) {
+            c.position.z += 15;
+            // c.rotation.z += r * 0.1;
+            // c.rotation.y += r * 0.05;
+          } else {
+            // console.log('dying');
+            destroy.remove(c);
+          }
+        }
+
+        // var now = new Date();
+        // camera.position.set(Math.sin(now)*b2, Math.cos(now)*b2, bounds);
+        camera.rotateZ(0.01);
+
+        // cube.rotation.x += 0.1;
+        // cube.rotation.y += 0.1;
+      
+        renderer.render(scene, camera);
+      };
+      
+      var destroyer;
+      var start = setInterval(function() {
+        if (mags) {
+          render();
+
+          destroyer = setInterval(function() {
+            if (destroy.children.length) {
+              console.log('killing one');
+              var dying = destroy.children[0];
+              destroy.remove(dying);
+              
+              var idx    = ~~(Math.random() * nCubes)
+                  // rndShp = cubes.children[idx],
+                  datum  = mags[idx] * maxCubeSize;
+
+              // rndShp.scale.set(datum, datum, datum);
+            }
+          }, 300);
+
+          clearInterval(start);
+        }
+      }, 100);
+
+      window.addEventListener('keypress', function(e) {
+        console.log(e.keyCode);
+      });
+
+    </script>
+
+  </body>
+</html>
