@@ -91,6 +91,63 @@ function setupAudioStream(opts, audioDataProcessor) {
   });
 }
 
+// we're doing it live
+
+// https://github.com/streunerlein/jsz-threejs
+var renderhooks = [],
+    magnitudes = [],
+    count = 256,
+    audioDataForShader = new Float32Array(1024);
+
+function setupAudioStreamLazy() {
+
+  navigator.webkitGetUserMedia({audio: true}, startaudio, function() {});
+
+  var context = new webkitAudioContext();
+  var analyser = context.createAnalyser();
+
+  function startaudio(stream) {
+    var mic = context.createMediaStreamSource(stream);
+    mic.connect(analyser);
+
+    // renderhooks.push(function() {
+      var data = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(data);
+
+      var bin_size = Math.floor(data.length / count);
+
+      for (var i = 0; i < count; i++) {
+        var sum = 0;
+
+        for (var j =0; j < bin_size; j++) {
+          sum += data[(i * bin_size) + j];
+        }
+        var average = sum / bin_size;
+        var magnitude = average / 256;
+        magnitudes[i] = magnitude; // emit magnitude
+
+        audioDataForShader[i] = magnitude;
+        audioDataForShader[i+1] = 0.0;
+        audioDataForShader[i+2] = 0.0;
+        audioDataForShader[i+3] = 1.0;
+
+        // var data   = new Float32Array(1024);
+        //   for (var i = 0; i < 1024; i+=4) {
+        //     var datum = (magnitudes[i/4] + 1) / 2;
+        //     data[i] = datum;
+        //     data[i+1] = 0.0;
+        //     data[i+2] = 0.0;
+        //     data[i+3] = 1.0;
+        //   }
+      }
+      updateAudioTexture(audioDataForShader);
+      console.log('hi');
+    // });
+  }
+}
+
+
+
 /* do textures since they're more accessible than buffers (glsl array indexing limitations)
  *
  */
@@ -112,6 +169,8 @@ function initAudioTexture() {
 }
 
 function updateAudioTexture(data) {
+  // console.log(data.length);
+
   gl.useProgram(currentProgram);
 
   gl.activeTexture(gl.TEXTURE0 + textureOffset);
@@ -121,6 +180,7 @@ function updateAudioTexture(data) {
   
   gl.uniform1i(gl.getUniformLocation(currentProgram, 'audioTex'), textureOffset);  // to the shader
 }
+
 
 
 
