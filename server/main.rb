@@ -38,6 +38,14 @@ get '/e' do
     send_file 'static/index.html'
 end
 
+get '/loader.html' do
+    send_file 'static/loader.html'
+end
+
+get 'invisible.html' do
+    send_file 'static/invisible.html'
+end
+
 get %r{/item/(\d+)([/.](\d+))?} do
     code_id=params[:captures][0].to_i
     if params[:captures][1]

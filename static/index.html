@@ -6,13 +6,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
     <style>
 
+
+
       body {
 
         background-color: #000000;
         margin: 0;
         padding: 0;
         overflow: hidden;
-
+        //cursor: none;
+      
       }
 
       button, select, a, a:visited {
@@ -60,7 +63,38 @@
       }
 
     </style>
+
+    <script>
+
+      // function startParams() {
+      //   parameters = { 
+      //   startTime: Date.now(), 
+      //   time: 0, 
+      //   mouseX: 0.5, mouseY: 0.5, 
+      //   screenWidth: 0, screenHeight: 0, 
+      //   dampen: 1,
+      //   audio: new Float32Array(256) // XXX
+      //   };
+      // }
+
+      // function initFrameMessages() { 
+      //   if (window.parent) {
+      //     window.parent.setUpFrame(); 
+      //     return true; 
+      //   } else {
+      //     console.log('no parent container');
+      //     return false;
+      //   }
+      // }
+      
+      // function setDamp(d) {
+      //   if (d < 1) parameters.dampen -= 0.1;
+      //   else parameters.dampen += 0.1;
+      // }
+
+    </script>
   </head>
+  <!-- <body onload='initFrameMessages();'> -->
   <body>
 
     <canvas id='textureData'></canvas>
@@ -73,9 +107,47 @@
     <script src='js/helpers.js'></script>
     <script src="js/codemirror.js"></script>
     <script src="js/glsl.js"></script>
+<!--
+  <script>
+    function initFrameMessages() { 
+      console.log('in');
+      if (window.parent) {
+        console.log('setup');
+        window.parent.setUpFrame();
+        // window.parent.box.dom.setUpFrameMessages();
+        return true; 
+      } else {
+        console.log('no parent container');
+        return false;
+      }
+    }
+
+    // window.setShader = function(shaderRaw) {
+    //   d3.select('#fs').text(shaderRaw.replace('\n', ''));
+    // }
+
+    // window.initShader = function(shaderRaw) {
+    //   // was just above init() definition
+
+    //   d3.select('#fs').text(shaderRaw.replace('\n', ''));
+
+    //   var effectDiv, sourceDiv, canvas, gl, buffer,
+    //   vertex_shader, fragment_shader, currentProgram,
+    //   vertexPositionLocation, texture, textureLocation,
+    //   parameters = { start_time: new Date().getTime(), time: 0, screenWidth: 0, screenHeight: 0 };
+
+    //   init();
+    //   animate();
+    // }
+
+    function yourMethod(arg) { console.log('my mthod', arg); }
+
+    document.body.onload = initFrameMessages();
+  </script>
+-->
 
     <!-- XXX MT -->
-    <script src='js/audio-inahat.js'></script>
+    <script src='js/audio-inahat-new.js'></script>
     <!-- <script src='js/transitions.js'></script> -->
 
 
@@ -102,13 +174,16 @@ void main( void ) {
   pos.x *= resolution.x / resolution.y;
   float color = 0.0;
   
+  vec4 datum = texture2D(audioTex, gl_FragCoord.xy);
+
   for(float i = 1.0; i <= 10.0; i++)
   {
     for(float k = 0.0; k < 20.0; k++)
     {
       float t = time * i * k * 0.002; // speed
       vec2 sPos = vec2(rand(vec2(i, k)) + sin(t), rand(vec2(k, i)) + cos(t));
-      float audioDatum = audio[int(((i - 1.) * 10.) + k + i)];
+      float audioDatum = datum.r;
+      //float audioDatum = audio[int(((i - 1.) * 10.) + k + i)];
       //sPos *= 0.5;
       // float modifier = 0.4;
       // float modifier = mouse.x;
@@ -176,6 +251,10 @@ void main( void ) {
 
     <script>
 
+
+      var DEBUG = true;
+
+
       initialize_helper();
 
       var compressor=initialize_compressor();
@@ -210,15 +289,16 @@ void main( void ) {
 
       var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
       var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
-      var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition, panButton,
+      var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition, panButton;
       parameters = { 
         startTime: Date.now(), 
         time: 0, 
         mouseX: 0.5, mouseY: 0.5, 
         screenWidth: 0, screenHeight: 0, 
+        dampen: 1,
         audio: new Float32Array(256) // XXX
-      },
-      surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
+      };
+      var surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
       frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
 
 
@@ -226,6 +306,7 @@ void main( void ) {
 
 
       init();
+      hideAllUI();
       if (gl) { animate(); }
 
       function init() {
@@ -243,104 +324,105 @@ void main( void ) {
 
 
         //
+        if (DEBUG) {
 
-        toolbar = document.createElement( 'div' );
-        toolbar.style.position = 'absolute';
-        toolbar.style.top = '25px';
-        toolbar.style.left = '25px';
-        document.body.appendChild( toolbar );
+          toolbar = document.createElement( 'div' );
+          toolbar.style.position = 'absolute';
+          toolbar.style.top = '25px';
+          toolbar.style.left = '25px';
+          document.body.appendChild( toolbar );
 
-        var rightside = document.createElement( 'div' );
-        rightside.style.cssFloat = 'right';
-        toolbar.appendChild( rightside );
+          var rightside = document.createElement( 'div' );
+          rightside.style.cssFloat = 'right';
+          toolbar.appendChild( rightside );
 
-        panButton = document.createElement( 'button' );
-        panButton.textContent = 'pan/zoom';
-        panButton.style.cursor = 'move';
-        panButton.style.display = 'none';
-        panButton.title = "Pan: left-drag, Zoom: right-drag. Use 'hide code' for a large pan/zoom area.";
-        rightside.appendChild( panButton );
+          panButton = document.createElement( 'button' );
+          panButton.textContent = 'pan/zoom';
+          panButton.style.cursor = 'move';
+          panButton.style.display = 'none';
+          panButton.title = "Pan: left-drag, Zoom: right-drag. Use 'hide code' for a large pan/zoom area.";
+          rightside.appendChild( panButton );
 
-        fullscreenButton = document.createElement( 'button' );
-        fullscreenButton.textContent = 'fullscreen';
-        fullscreenButton.title = 'Press F11 to enter or leave fullscreen mode';
-        fullscreenButton.addEventListener( 'click', function ( event ) {
+          fullscreenButton = document.createElement( 'button' );
+          fullscreenButton.textContent = 'fullscreen';
+          fullscreenButton.title = 'Press F11 to enter or leave fullscreen mode';
+          fullscreenButton.addEventListener( 'click', function ( event ) {
 
-          if (document.body.requestFullScreen) {
-            document.body.requestFullScreen();
-          } else if (document.body.mozRequestFullScreen) {
-            document.body.mozRequestFullScreen();
-          } else if (document.body.webkitRequestFullScreen) {
-            document.body.webkitRequestFullScreen( Element.ALLOW_KEYBOARD_INPUT );
+            if (document.body.requestFullScreen) {
+              document.body.requestFullScreen();
+            } else if (document.body.mozRequestFullScreen) {
+              document.body.mozRequestFullScreen();
+            } else if (document.body.webkitRequestFullScreen) {
+              document.body.webkitRequestFullScreen( Element.ALLOW_KEYBOARD_INPUT );
+            }
+
+          }, false );
+
+          rightside.appendChild( fullscreenButton );
+
+          var button = document.createElement( 'a' );
+          button.textContent = 'gallery';
+          button.href = 'http://glsl.heroku.com/';
+          rightside.appendChild( button );
+
+          var button = document.createElement( 'button' );
+          button.textContent = 'hide code';
+          button.addEventListener( 'click', function ( event ) {
+
+            if ( isCodeVisible() ) {
+
+              button.textContent = 'show code';
+              code.getWrapperElement().style.display = 'none';
+              compileButton.style.visibility = 'hidden';
+              set_save_button('hidden');
+              set_parent_button('hidden');
+              stopHideUI();
+
+            } else {
+
+              button.textContent = 'hide code';
+              code.getWrapperElement().style.display = '';
+              compileButton.style.visibility = 'visible';
+              set_save_button('visible');
+              set_parent_button('visible');
+
+            }
+
+          }, false );
+          toolbar.appendChild( button );
+
+          var select = document.createElement( 'select' );
+
+          for ( var i = 0; i < quality_levels.length; i ++ ) {
+
+            var option = document.createElement( 'option' );
+            option.textContent = quality_levels[ i ];
+            if ( quality_levels[ i ] == quality ) option.selected = true;
+            select.appendChild( option );
+
           }
 
-        }, false );
+          select.addEventListener( 'change', function ( event ) {
 
-        rightside.appendChild( fullscreenButton );
+            quality = quality_levels[ event.target.selectedIndex ];
+            onWindowResize();
 
-        var button = document.createElement( 'a' );
-        button.textContent = 'gallery';
-        button.href = 'http://glsl.heroku.com/';
-        rightside.appendChild( button );
+          }, false );
 
-        var button = document.createElement( 'button' );
-        button.textContent = 'hide code';
-        button.addEventListener( 'click', function ( event ) {
+          toolbar.appendChild( select );
 
-          if ( isCodeVisible() ) {
+          compileButton = document.createElement( 'button' );
+          compileButton.textContent = 'compile';
+          compileButton.addEventListener( 'click', function ( event ) {
 
-            button.textContent = 'show code';
-            code.getWrapperElement().style.display = 'none';
-            compileButton.style.visibility = 'hidden';
-            set_save_button('hidden');
-            set_parent_button('hidden');
-            stopHideUI();
+            compile();
 
-          } else {
+          }, false );
+          toolbar.appendChild( compileButton );
 
-            button.textContent = 'hide code';
-            code.getWrapperElement().style.display = '';
-            compileButton.style.visibility = 'visible';
-            set_save_button('visible');
-            set_parent_button('visible');
-
-          }
-
-        }, false );
-        toolbar.appendChild( button );
-
-        var select = document.createElement( 'select' );
-
-        for ( var i = 0; i < quality_levels.length; i ++ ) {
-
-          var option = document.createElement( 'option' );
-          option.textContent = quality_levels[ i ];
-          if ( quality_levels[ i ] == quality ) option.selected = true;
-          select.appendChild( option );
-
+          // from helper.js
+          add_server_buttons();
         }
-
-        select.addEventListener( 'change', function ( event ) {
-
-          quality = quality_levels[ event.target.selectedIndex ];
-          onWindowResize();
-
-        }, false );
-
-        toolbar.appendChild( select );
-
-        compileButton = document.createElement( 'button' );
-        compileButton.textContent = 'compile';
-        compileButton.addEventListener( 'click', function ( event ) {
-
-          compile();
-
-        }, false );
-        toolbar.appendChild( compileButton );
-
-        // from helper.js
-        add_server_buttons();
-
         // Initialise WebGL
 
         try {
@@ -353,7 +435,8 @@ void main( void ) {
 
         if ( !gl ) {
 
-          alert("WebGL not supported, but code will be shown.");
+          console.log('no webgl');
+          // alert("WebGL not supported, but code will be shown.");
 
         } else {
 
@@ -417,11 +500,11 @@ void main( void ) {
 
             if (event.button === 0) {
               surface.isPanning = true;
-              document.body.style.cursor = 'move';
+              // document.body.style.cursor = 'move';
             } else {
               surface.isZooming = true;
-              document.body.style.cursor = 'se-resize';
-              panButton.style.cursor = 'se-resize';
+              // document.body.style.cursor = 'se-resize';
+              // panButton.style.cursor = 'se-resize';
             }
 
             surface.lastX = event.clientX;
@@ -437,13 +520,20 @@ void main( void ) {
           };
 
           canvas.addEventListener( 'mousedown', surfaceMouseDown, false );
-          panButton.addEventListener( 'mousedown', surfaceMouseDown, false );
+          // panButton.addEventListener( 'mousedown', surfaceMouseDown, false );
 
           canvas.addEventListener( 'contextmenu', noContextMenu, false);
-          panButton.addEventListener( 'contextmenu', noContextMenu, false);
+          // panButton.addEventListener( 'contextmenu', noContextMenu, false);
         }
         
         var clientXLast, clientYLast;
+
+        // XXX MIKE: click to show code
+        document.addEventListener('click', function(e) {
+          // console.log('click in shader:', e);
+          stopHideUI();
+        });
+
 
         document.addEventListener( 'mousemove', function ( event ) {
 
@@ -456,7 +546,7 @@ void main( void ) {
           clientXLast = clientX;
           clientYLast = clientY;
 
-          stopHideUI();
+          // stopHideUI();
 
           var codeElement, dx, dy;
           
@@ -499,8 +589,8 @@ void main( void ) {
 
         function settleDown ( event ) {
           resizer.isResizing = surface.isPanning = surface.isZooming = false;
-          document.body.style.cursor = 'default';
-          panButton.style.cursor = 'move';
+          // document.body.style.cursor = 'default';
+          // panButton.style.cursor = 'move';
         }
 
         function mouseLeave(event) {
@@ -528,11 +618,13 @@ void main( void ) {
       var hideUITimer;
       var isUIHidden = false;
 
-      function startHideUITimer () {
+
+      function startHideUITimer (t) {
+        if (!t) t = 1000;
 
         stopHideUITimer();
         if (!isUIHidden && !isCodeVisible())
-          hideUITimer = window.setTimeout(onHideUITimer, 1000 * 5 );
+          hideUITimer = window.setTimeout(onHideUITimer, t );
 
         function onHideUITimer() {
 
@@ -555,7 +647,19 @@ void main( void ) {
         }
       }
 
-      function stopHideUI () {
+      // XXX MIKE: launch this one time when the page inits
+      function hideAllUI() {
+        var button = toolbar.getElementsByTagName('button')[2];
+        button.textContent = 'show code';
+        code.getWrapperElement().style.display = 'none';
+        compileButton.style.visibility = 'hidden';
+        set_save_button('hidden');
+        set_parent_button('hidden');
+        stopHideUI(1);
+      }
+
+      function stopHideUI (t) {
+        if (!t) t = 1000;
 
         if (isUIHidden) {
 
@@ -563,7 +667,7 @@ void main( void ) {
           toolbar.style.display = '';
           document.body.style.cursor = '';
         }
-        startHideUITimer();
+        startHideUITimer(t);
       }
 
 
@@ -661,12 +765,14 @@ void main( void ) {
 
         currentProgram = program;
 
-        compileButton.style.color = '#00ff00';
-        compileButton.textContent = 'compiled successfully';
+        if (DEBUG) {
+          compileButton.style.color = '#00ff00';
+          compileButton.textContent = 'compiled successfully';
 
-        set_save_button('visible');
+          set_save_button('visible');
 
-        panButton.style.display = (fragment.indexOf('varying vec2 surfacePosition;') >= 0) ? 'inline' : 'none';
+          panButton.style.display = (fragment.indexOf('varying vec2 surfacePosition;') >= 0) ? 'inline' : 'none';
+        } 
 
         // Cache uniforms
 
@@ -675,6 +781,7 @@ void main( void ) {
         cacheUniformLocation( program, 'resolution' );
         cacheUniformLocation( program, 'backbuffer' );
         cacheUniformLocation( program, 'surfaceSize' );
+        cacheUniformLocation( program, 'dampen' );
         cacheUniformLocation( program, 'audio' ); // XXX
         cacheUniformLocation( program, 'audioTex'); // XXX
 
@@ -825,7 +932,7 @@ void main( void ) {
         gl.shaderSource( shader, src );
         gl.compileShader( shader );
 
-        compileButton.title = '';
+        if (DEBUG) compileButton.title = '';
 
         if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
@@ -836,13 +943,15 @@ void main( void ) {
             error = error.substring(0, error.length - 1);
           }
 
-          compileButton.title = error;
+          if (DEBUG) compileButton.title = error;
           console.error( error );
 
-          compileButton.style.color = '#ff0000';
-          compileButton.textContent = 'compiled with errors';
+          if (DEBUG) {
+            compileButton.style.color = '#ff0000';
+            compileButton.textContent = 'compiled with errors';
 
-          set_save_button('hidden');
+            set_save_button('hidden');
+          }
 
           while (index >= 0) {
             index = error.indexOf("ERROR: 0:", index);
@@ -921,14 +1030,16 @@ void main( void ) {
        * set up the audio stream and send data to the shader via uniforms
        */
       var streamOptions = {
-        bufferSize: 512,
+        bufferSize: 256,
         inputChannels: 1,
         outputChannels: 1
       };
 
       initAudioTexture();
 
-      setupAudioStream(streamOptions, processors.data2texture);
+      // setupAudioStream(streamOptions, processors.data2texture);
+      // setupAudioStreamLazy();
+      initMic();
 
       // XXX end audio init
 
@@ -938,7 +1049,22 @@ void main( void ) {
 
         requestAnimationFrame( animate );
 
-        //
+        // // XXX
+        var rh = renderhooks.length;
+        while(rh--) {
+          renderhooks[rh]();
+          var data   = new Float32Array(1024);
+          for (var i = 0; i < 1024; i+=4) {
+            data[i] = mags[i/4];
+            data[i+1] = 0.0;
+            data[i+2] = 0.0;
+            data[i+3] = 1.0;
+          }
+
+          updateAudioTexture(data);
+
+          // updateAudioTexture(magnitudes);
+        }
 
         render();
 
@@ -959,6 +1085,7 @@ void main( void ) {
         gl.uniform2f( currentProgram.uniformsCache[ 'resolution' ], parameters.screenWidth, parameters.screenHeight );
         gl.uniform1i( currentProgram.uniformsCache[ 'backbuffer' ], 0 );
         gl.uniform2f( currentProgram.uniformsCache[ 'surfaceSize' ], surface.width, surface.height );
+        gl.uniform1f( currentProgram.uniformsCache[ 'dampen' ], parameters.dampen);
 
         gl.bindBuffer( gl.ARRAY_BUFFER, surface.buffer );
         gl.vertexAttribPointer( surface.positionAttribute, 2, gl.FLOAT, false, 0, 0 );
@@ -1005,7 +1132,7 @@ void main( void ) {
 
       }
 
-    </script>
+  </script>
 
   </body>
 </html>
