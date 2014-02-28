@@ -12,6 +12,8 @@ for rapid prototyping of concert visuals
 1. start mongo (`mongod`)
 2. `bundle exec rackup config.ru`
 3. hit `http://localhost:9292`
+4. (optional) generate fake certs and use thin for SSL so you don't get a prompt for microphone access
+every time you visit the shader page: `thin start -p 9292 --ssl --ssl-verify --ssl-key-file .ssl/server.key --ssl-cert-file .ssl/server.crt`
 
 ### shader uniforms
 
@@ -28,8 +30,7 @@ you can replace `gl_FragCoord.xy` with any vec2 with normalized coordinates.
 
 ### todo
 
-1. https (with thin?) so chrome doesn't ask for microphone access every time
-2. controls for fading/transitioning
-3. should rewrite this with a less bulky interface & less overhead ("presentation mode"?)
-4. audio smoothing
-5. a lot more
+1. controls for fading/transitioning
+2. should rewrite this with a less bulky interface & less overhead ("presentation mode"?)
+3. audio smoothing
+4. a lot more
