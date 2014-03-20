@@ -2,6 +2,9 @@ audio-reactive glsl sandbox forked from doob's glsl-sandbox
 
 for rapid prototyping of concert visuals
 
+NOTE: my additions were written under hackathon-style conditions, so please
+excuse the mess (for now)
+
 ### setup
 
 1. `bundle install`
@@ -17,15 +20,9 @@ every time you visit the shader page: `thin start -p 9292 --ssl --ssl-verify --s
 
 ### shader uniforms
 
-you can pass an array or a texture with audio data to the fragment shader.
-
-if you want to pass an array, declare `uniform float audio[N];` in 
-your shader, where N = your audio buffer size (make sure to assign the audio buffer 
-to the global `parameters.audio` in your audio processor function first). 
-
-if you don't want to deal with GLSL's const-only array indexing, there's a data-to-texture
+so you don't have to deal with GLSL's const-only array indexing, there's a data-to-texture
 pipeline included. declare `uniform sampler2D audioTex` in the frag shader, then access
-the data anywhere in the shader with `vec4 data = texture2D(audioTex, gl_FragCoord.xy);`.
+the data anywhere in the shader with `vec4 datum = texture2D(audioTex, gl_FragCoord.xy);`.
 you can replace `gl_FragCoord.xy` with any vec2 with normalized coordinates.
 
 ### todo
