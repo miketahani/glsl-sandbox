@@ -6,13 +6,9 @@ var renderhooks = [],
     dampener = 1,
     shaderData = new Float32Array(1024);
 
-function initMic() {
+function setupAudioStreamFFT() {
 
-  navigator.getUserMedia_ = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-
-  navigator.getUserMedia_({
-    audio: true
-  }, startaudio, function() {});
+  navigator.webkitGetUserMedia({audio: true}, startaudio, function() {});
 
   var context = new webkitAudioContext();
   var analyser = context.createAnalyser();
@@ -20,10 +16,12 @@ function initMic() {
   console.log(context, analyser);
 
   function startaudio(stream) {
+
     var mediaStreamSource = context.createMediaStreamSource(stream);
     mediaStreamSource.connect(analyser);
 
     renderhooks.push(function() {
+
       var data = new Uint8Array(analyser.frequencyBinCount);
       analyser.getByteFrequencyData(data);
 
@@ -38,20 +36,12 @@ function initMic() {
 
         var average = sum / bin_size;
 
-        // var particle = particleSystem.geometry.vertices[i];
         var magnitude = average / 256;
 
         // emit magnitude
         mags[i] = magnitude;
-
-        // shaderData[i] = magnitude;
-        // shaderData[i+1] = 0;
-        // shaderData[i+2] = 0;
-        // shaderData[i+3] = 1;
-
           
       }
-      // updateAudioTexture(shaderData);
 
     });
   }
@@ -86,6 +76,3 @@ function updateAudioTexture(data) {
   gl.uniform1i(gl.getUniformLocation(currentProgram, 'audioTex'), textureOffset);  // to the shader
 }
 
-window.addEventListener('click', function(e) {
-  console.log('clicked');
-});
