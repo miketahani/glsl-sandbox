@@ -79,8 +79,9 @@
     <script src="js/glsl.js"></script>
 
     <!-- XXX MT -->
-    <script src='js/audio-inahat-new.js'></script>
+    <!-- <script src='js/audio-inahat-new.js'></script> -->
     <!-- <script src='js/transitions.js'></script> -->
+    <script src='js/glsl-audio.js'></script>
 
 
     <script id="example" type="x-shader/x-fragment">#ifdef GL_ES
@@ -232,12 +233,17 @@ void main( void ) {
       var surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
       frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
 
-      var audioTexture; // XXX
+      // var audioTexture; // XXX
 
 
       init();
-      hideAllUI();
+      // hideAllUI(); // XXX
+
+      // XXX new audio
+      var audio = new Audio({fftsize: 2048, textureOffset: 11, bins: true});
+
       if (gl) { animate(); }
+
 
       function init() {
 
@@ -725,6 +731,8 @@ void main( void ) {
         vertexPosition = gl.getAttribLocation(currentProgram, "position");
         gl.enableVertexAttribArray( vertexPosition );
 
+        audio.initAudioTexture();
+
       }
 
       function compileScreenProgram() {
@@ -957,19 +965,22 @@ void main( void ) {
       /* XXX audio init
        * set up the audio stream and send data to the shader via uniforms
        */
-      var streamOptions = {
-        bufferSize: 256,
-        inputChannels: 1,
-        outputChannels: 1
-      };
+      // var streamOptions = {
+      //   bufferSize: 256,
+      //   inputChannels: 1,
+      //   outputChannels: 1
+      // };
 
-      initAudioTexture();
+      // initAudioTexture();
 
-      // setupAudioStream(streamOptions, processors.data2texture);
-      // setupAudioStreamLazy();
-      setupAudioStreamFFT();  // XXX FFT version, older versions were using bad audio data
+      // // setupAudioStream(streamOptions, processors.data2texture);
+      // // setupAudioStreamLazy();
+      // setupAudioStreamFFT();  // XXX FFT version, older versions were using bad audio data
 
-      // XXX end audio init
+      // // XXX end audio init
+
+      // audio.initAudioTexture();
+
 
       //
 
@@ -977,22 +988,24 @@ void main( void ) {
 
         requestAnimationFrame( animate );
 
-        // // XXX
-        var rh = renderhooks.length;
-        while(rh--) {
-          renderhooks[rh]();
-          var data   = new Float32Array(1024);
-          for (var i = 0; i < 1024; i+=4) {
-            data[i] = mags[i/4];
-            data[i+1] = 0.0;
-            data[i+2] = 0.0;
-            data[i+3] = 1.0;
-          }
+        // // // XXX
+        // var rh = renderhooks.length;
+        // while(rh--) {
+        //   renderhooks[rh]();
+        //   var data   = new Float32Array(1024);
+        //   for (var i = 0; i < 1024; i+=4) {
+        //     data[i] = mags[i/4];
+        //     data[i+1] = 0.0;
+        //     data[i+2] = 0.0;
+        //     data[i+3] = 1.0;
+        //   }
 
-          updateAudioTexture(data);
+        //   updateAudioTexture(data);
 
-          // updateAudioTexture(magnitudes);
-        }
+        //   // updateAudioTexture(magnitudes);
+        // }
+        // audio.processAudioData();
+        audio.processAudioDataMagsTest();
 
         render();
 
