@@ -123,6 +123,11 @@ Audio.prototype.init = function() {
 
   if (this.params.three) {
 
+    /*
+      XXX NOTE FOR SHADERS
+      add "audioTex: {type: 't', value: new THREE.Texture()}" to your THREE.js shadermaterial uniforms,
+      then set uniforms.audioTex.value to Audio.audioTexture in the render loop
+    */
     this.audioTexture = new THREE.DataTexture(new Float32Array(this.PIXELCOUNT), this.SIDE, this.SIDE, THREE.RGBAFormat, THREE.FloatType, undefined, undefined, undefined, THREE.NearestFilter, THREE.NearestFilter);
     this.audioTexture.needsUpdate = true;
 
