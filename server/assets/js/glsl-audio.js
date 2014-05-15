@@ -154,6 +154,8 @@ Audio.prototype.init = function() {
 
 };
 
+
+// XXX FIX _updateRawTex assumes usage with doob's glsl-sandbox (gl, currentProgram, uniformsCache)
 Audio.prototype._updateRawTex = function(data) {
 
   var tOffset  = this.textureOffset;
