@@ -86,7 +86,7 @@ Audio.prototype.processAudioDataMags = function() {
 Audio.prototype.go = function() {
   if (this.micReady && this.texReady) 
     Audio.prototype.go = this.params.avgAudioData
-                       ? Audio.prototype.processAudioDataMagsTest 
+                       ? Audio.prototype.processAudioDataMags 
                        : Audio.prototype.processAudioData;
 };
 
