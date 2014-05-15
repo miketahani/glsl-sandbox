@@ -85,6 +85,7 @@ Audio.prototype.processAudioBufferMags = function() {
   this._updateAudioTexture(audioTextureData);
 };
 
+// thanks to Reza Ali for this method
 Audio.prototype.processAudioBufferDecay = function() {
 
   var newAudioBuffer = new Uint8Array(this.FFTBINCOUNT),
