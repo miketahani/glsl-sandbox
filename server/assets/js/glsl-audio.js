@@ -43,7 +43,7 @@ Audio.prototype.processAudioData = function() {
   // this.analyser.getByteTimeDomainData(audioData);
   this.analyser.getByteFrequencyData(audioData);
 
-  audioTextureData = new Float32Array(this.PIXELCOUNT);
+  var audioTextureData = new Float32Array(this.PIXELCOUNT);
   for (var i = 0; i < this.PIXELCOUNT; i+=4) {
     audioTextureData[i]   = audioData[i/4]/256;
     audioTextureData[i+1] = 0.0;
@@ -60,7 +60,7 @@ Audio.prototype.processAudioDataMags = function() {
   // this.analyser.getByteTimeDomainData(audioData);  // raw
   this.analyser.getByteFrequencyData(audioData);   // smooth
 
-  audioTextureData = new Float32Array(this.PIXELCOUNT);
+  var audioTextureData = new Float32Array(this.PIXELCOUNT);
 
   var bs = this.BINSIZE;
 
