@@ -24,6 +24,11 @@ function Audio(params) {
   this.analyser = audioContext.createAnalyser();
   this.analyser.fftSize = this.FFTSIZE;
 
+
+  // for audio decay (data processing function)
+  // create an array of zeroes (this will hold the previous buffer data for comparison)
+  this.audioBuffer = Array.apply(null, Array(this.FFTBINCOUNT)).map(Number.prototype.valueOf,0);
+
   var that = this;
 
   navigator.webkitGetUserMedia({audio: true}, function(stream) {
@@ -37,38 +42,38 @@ function Audio(params) {
 
 }
 
-Audio.prototype.processAudioData = function() {
+//  audio processing playground
 
-  var audioData = new Uint8Array(this.analyser.frequencyBinCount);
-  // this.analyser.getByteTimeDomainData(audioData);
-  this.analyser.getByteFrequencyData(audioData);
+Audio.prototype.processAudioBuffer = function() {
+
+  var audioBuffer = new Uint8Array(this.FFTBINCOUNT);
+  // this.analyser.getByteTimeDomainData(audioBuffer);
+  this.analyser.getByteFrequencyData(audioBuffer);
 
   var audioTextureData = new Float32Array(this.PIXELCOUNT);
   for (var i = 0; i < this.PIXELCOUNT; i+=4) {
-    audioTextureData[i]   = audioData[i/4]/256;
+    audioTextureData[i]   = audioBuffer[i/4]/256;
     audioTextureData[i+1] = 0.0;
     audioTextureData[i+2] = 0.0;
     audioTextureData[i+3] = 1.0;
   }
-  this.updateAudioTexture(audioTextureData);
-
+  this._updateAudioTexture(audioTextureData);
 };
 
-Audio.prototype.processAudioDataMags = function() {
+Audio.prototype.processAudioBufferMags = function() {
 
-  var audioData = new Uint8Array(this.analyser.frequencyBinCount);
-  // this.analyser.getByteTimeDomainData(audioData);  // raw
-  this.analyser.getByteFrequencyData(audioData);   // smooth
+  var audioBuffer = new Uint8Array(this.FFTBINCOUNT);
+  // this.analyser.getByteTimeDomainData(audioBuffer);  // raw
+  this.analyser.getByteFrequencyData(audioBuffer);   // smooth
 
-  var audioTextureData = new Float32Array(this.PIXELCOUNT);
-
-  var bs = this.BINSIZE;
+  var audioTextureData = new Float32Array(this.PIXELCOUNT),
+      bs = this.BINSIZE;
 
   for (var i = 0; i < this.PIXELCOUNT; i+=4) {
 
     var sum = 0;
     for (var j = 0; j < bs; j++) {
-      sum += audioData[((i/4) * bs) + j];
+      sum += audioBuffer[((i/4) * bs) + j];
     }
     var mag = (sum / bs) / 256;
 
@@ -77,37 +82,73 @@ Audio.prototype.processAudioDataMags = function() {
     audioTextureData[i+2] = 0.0;
     audioTextureData[i+3] = 1.0;
   }
+  this._updateAudioTexture(audioTextureData);
+};
 
-  this.updateAudioTexture(audioTextureData);
+Audio.prototype.processAudioBufferDecay = function() {
+
+  var newAudioBuffer = new Uint8Array(this.FFTBINCOUNT),
+      decay = 0.97;
+  this.analyser.getByteTimeDomainData(newAudioBuffer);
+  // this.analyser.getByteFrequencyData(newAudioBuffer);
+
+  var audioTextureData = new Float32Array(this.PIXELCOUNT);
+  for (var i = 0; i < this.PIXELCOUNT; i+=4) {
+
+    var dataIdx = i/4;
+    if (newAudioBuffer[dataIdx] > this.audioBuffer[dataIdx]) {
+      this.audioBuffer[dataIdx] = newAudioBuffer[dataIdx];
+    } else {
+      this.audioBuffer[dataIdx] *= decay;
+    }
+
+    audioTextureData[i]   = this.audioBuffer[dataIdx]/256;
+    audioTextureData[i+1] = 0.0;
+    audioTextureData[i+2] = 0.0;
+    audioTextureData[i+3] = 1.0;
+  }
+  this._updateAudioTexture(audioTextureData);
 
 };
 
 // XXX i feel like this might smell really bad
-Audio.prototype.go = function() {
-  if (this.micReady && this.texReady) 
-    Audio.prototype.go = this.params.avgAudioData
-                       ? Audio.prototype.processAudioDataMags 
-                       : Audio.prototype.processAudioData;
+Audio.prototype.update = function() {
+  if (this.micReady && this.texReady)
+    Audio.prototype.update = Audio.prototype.processAudioBufferDecay; // choose wisely
 };
 
-Audio.prototype.initAudioTexture = function() {
 
-  this.audioTexture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, this.audioTexture);
+Audio.prototype.init = function() {
 
-  // NEAREST req'd for floating-point texture TEXTURE_{MIN/MAG}_FILTER
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if (this.params.three) {
 
-  gl.bindTexture(gl.TEXTURE_2D, null);
+    this.audioTexture = new THREE.DataTexture(new Float32Array(this.PIXELCOUNT), this.SIDE, this.SIDE, THREE.RGBAFormat, THREE.FloatType, undefined, undefined, undefined, THREE.NearestFilter, THREE.NearestFilter);
+    this.audioTexture.needsUpdate = true;
+
+    Audio.prototype._updateAudioTexture = Audio.prototype._updateThreeTex;
+
+  } else {
+
+    this.audioTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.audioTexture);
+
+    // NEAREST req'd for floating-point texture TEXTURE_{MIN/MAG}_FILTER
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    Audio.prototype._updateAudioTexture = Audio.prototype._updateRawTex;
+
+  }
 
   this.texReady = true;
 
 };
 
-Audio.prototype.updateAudioTexture = function(data) {
+Audio.prototype._updateRawTex = function(data) {
 
   var tOffset  = this.textureOffset;
       side     = this.SIDE;
@@ -121,6 +162,11 @@ Audio.prototype.updateAudioTexture = function(data) {
   // gl.getUniformLocation(currentProgram, 'audioTex')
   gl.uniform1i(currentProgram.uniformsCache['audioTex'], tOffset);  // to the shader
 
+};
+
+Audio.prototype._updateThreeTex = function(data) {
+  this.audioTexture.image = data;
+  this.audioTexture.needsUpdate = true;
 };
 
 
