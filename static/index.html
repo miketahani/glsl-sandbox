@@ -731,7 +731,7 @@ void main( void ) {
         vertexPosition = gl.getAttribLocation(currentProgram, "position");
         gl.enableVertexAttribArray( vertexPosition );
 
-        audio.initAudioTexture();
+        audio.init();
 
       }
 
@@ -988,7 +988,7 @@ void main( void ) {
 
         requestAnimationFrame( animate );
 
-        audio.go();
+        audio.update();
 
         render();
 
