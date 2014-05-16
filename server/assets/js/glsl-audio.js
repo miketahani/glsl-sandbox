@@ -96,14 +96,12 @@ Audio.prototype.processAudioBufferDecay = function() {
   var audioTextureData = new Float32Array(this.PIXELCOUNT);
   for (var i = 0; i < this.PIXELCOUNT; i+=4) {
 
-    var dataIdx = i/4;
-    if (newAudioBuffer[dataIdx] > this.audioBuffer[dataIdx]) {
-      this.audioBuffer[dataIdx] = newAudioBuffer[dataIdx];
-    } else {
-      this.audioBuffer[dataIdx] *= decay;
-    }
+    var dataIdx  = i/4,
+        audioVal = Math.max(newAudioBuffer[dataIdx], this.audioBuffer[dataIdx] * decay);
+    
+    this.audioBuffer[dataIdx] = audioVal;
 
-    audioTextureData[i]   = this.audioBuffer[dataIdx]/256;
+    audioTextureData[i]   = audioVal/256;
     audioTextureData[i+1] = 0.0;
     audioTextureData[i+2] = 0.0;
     audioTextureData[i+3] = 1.0;
@@ -112,10 +110,39 @@ Audio.prototype.processAudioBufferDecay = function() {
 
 };
 
+// XXX blech, hacky and inefficient
+Audio.prototype.processAudioBufferDecayRaw = function() {
+
+  var newAudioBuffer = new Uint8Array(this.FFTBINCOUNT),
+      decay = 0.97;
+  this.analyser.getByteTimeDomainData(newAudioBuffer);
+  // this.analyser.getByteFrequencyData(newAudioBuffer);
+
+  var audioTextureData = new Float32Array(this.FFTBINCOUNT);
+  for (var i = 0; i < this.FFTBINCOUNT; i++) {
+
+    if (newAudioBuffer[i] > this.audioBuffer[i]) {
+      this.audioBuffer[i] = newAudioBuffer[i];
+    } else {
+      this.audioBuffer[i] *= decay;
+    }
+
+    audioTextureData[i] = this.audioBuffer[i]/256;
+  }
+  
+  this.audioDecayRawData = audioTextureData;
+
+};
+
+
 // XXX i feel like this might smell really bad
 Audio.prototype.update = function() {
   if (this.micReady && this.texReady)
-    Audio.prototype.update = Audio.prototype.processAudioBufferDecay; // choose wisely
+    // Audio.prototype.update = Audio.prototype.processAudioBufferDecay; // choose wisely
+    // XXX TEMP:
+    Audio.prototype.update = this.params.decayraw 
+                           ? Audio.prototype.processAudioBufferDecayRaw 
+                           : Audio.prototype.processAudioBufferDecay;
 };
 
 
@@ -132,6 +159,12 @@ Audio.prototype.init = function() {
     this.audioTexture.needsUpdate = true;
 
     Audio.prototype._updateAudioTexture = Audio.prototype._updateThreeTex;
+
+  // XXX FIX hacky temp
+  } else if (this.params.decayraw) {
+
+    this.texReady = true;
+    return;
 
   } else {
 
@@ -173,7 +206,7 @@ Audio.prototype._updateRawTex = function(data) {
 };
 
 Audio.prototype._updateThreeTex = function(data) {
-  this.audioTexture.image = data;
+  this.audioTexture.image.data = data;
   this.audioTexture.needsUpdate = true;
 };
 
