@@ -121,13 +121,12 @@ Audio.prototype.processAudioBufferDecayRaw = function() {
   var audioTextureData = new Float32Array(this.FFTBINCOUNT);
   for (var i = 0; i < this.FFTBINCOUNT; i++) {
 
-    if (newAudioBuffer[i] > this.audioBuffer[i]) {
-      this.audioBuffer[i] = newAudioBuffer[i];
-    } else {
-      this.audioBuffer[i] *= decay;
-    }
+    var dataIdx  = i/4,
+        audioVal = Math.max(newAudioBuffer[dataIdx], this.audioBuffer[dataIdx] * decay);
+    
+    this.audioBuffer[dataIdx] = audioVal;
 
-    audioTextureData[i] = this.audioBuffer[i]/256;
+    audioTextureData[i]   = audioVal/256;
   }
   
   this.audioDecayRawData = audioTextureData;
@@ -152,7 +151,7 @@ Audio.prototype.init = function() {
 
     /*
       XXX NOTE FOR SHADERS
-      add "audioTex: {type: 't', value: new THREE.Texture()}" to your THREE.js shadermaterial uniforms,
+      add "audioTex: {type: 't', value: new THREE.Texture()}" to your THREE.ShaderMaterial uniforms,
       then set uniforms.audioTex.value to Audio.audioTexture in the render loop
     */
     this.audioTexture = new THREE.DataTexture(new Float32Array(this.PIXELCOUNT), this.SIDE, this.SIDE, THREE.RGBAFormat, THREE.FloatType, undefined, undefined, undefined, THREE.NearestFilter, THREE.NearestFilter);
@@ -207,7 +206,7 @@ Audio.prototype._updateRawTex = function(data) {
 
 Audio.prototype._updateThreeTex = function(data) {
   this.audioTexture.image.data = data;
-  this.audioTexture.needsUpdate = true;
+  this.audioTexture.needsUpdate = true; // XXX must set this in the render loop
 };
 
 

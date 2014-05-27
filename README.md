@@ -1,6 +1,6 @@
-audio-reactive glsl sandbox forked from doob's glsl-sandbox
+audio-reactive glsl sandbox forked from doob's glsl-sandbox for rapid prototyping of concert visuals
 
-for rapid prototyping of concert visuals
+my audio additions are [here](https://github.com/miketahani/glsl-sandbox/blob/master/server/assets/js/glsl-audio.js).
 
 NOTE: my additions were written under hackathon-style conditions, so please
 excuse the mess (for now)
